@@ -17,9 +17,15 @@ ARG PGBACKREST_VERSION=2.60.1-1.pgdg13+1
 # The official image already trusts the PGDG apt repository.
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends "pgbackrest=${PGBACKREST_VERSION}"; \
+    # ca-certificates: pgBackRest verifies the object store's TLS certificate
+    # against the system trust store; without it every repository command
+    # fails ("unable to get local issuer certificate"). Not pulled in by
+    # --no-install-recommends, and the test stacks hid it (their store uses
+    # a CA given in repo1-storage-ca-file).
+    apt-get install -y --no-install-recommends ca-certificates "pgbackrest=${PGBACKREST_VERSION}"; \
     rm -rf /var/lib/apt/lists/*; \
     pgbackrest version | grep -q '^pgBackRest 2\.60\.1$'; \
+    test -s /etc/ssl/certs/ca-certificates.crt; \
     # Mount points owned by postgres, so fresh named volumes inherit it.
     install -d -o postgres -g postgres -m 0750 /var/spool/pgbackrest /var/lib/idenplane-dumps /var/log/pgbackrest /etc/pgbackrest
 

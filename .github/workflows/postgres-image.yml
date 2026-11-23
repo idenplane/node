@@ -32,6 +32,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: false
-          tags: ghcr.io/idenplane/node-postgres:17.12-pgbackrest2.60.1
+          tags: ghcr.io/idenplane/node-postgres:17.12-pgbackrest2.60.1-2
       - name: The digest to put in the release catalog
         run: echo "ghcr.io/idenplane/node-postgres@${{ steps.build.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"
