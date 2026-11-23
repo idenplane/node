@@ -1,0 +1,37 @@
+# Builds the tenant PostgreSQL image and publishes it to GHCR. The release
+# catalog pins it by digest (components.postgres), never by tag: the digest
+# printed at the end of the run is the one to sign.
+name: postgres-image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["images/postgres/**", ".github/workflows/postgres-image.yml"]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: images/postgres
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ghcr.io/idenplane/node-postgres:17.12-pgbackrest2.60.1
+      - name: The digest to put in the release catalog
+        run: echo "ghcr.io/idenplane/node-postgres@${{ steps.build.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"
